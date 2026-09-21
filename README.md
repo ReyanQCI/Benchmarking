@@ -22,6 +22,21 @@ source .venv/bin/activate
 
 # Now in the terminal you should see       
 **(benchmark) benchmark@benchmark-AS-4125GS-TNRT2** 
+
+# Change nvcc
+```Instruction
+export CUDA_HOME=/usr/local/cuda
+```
+```Instruction
+export PATH=/usr/local/cuda/bin:$PATH 
+```
+```Instruction
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH} 
+```
+**Check for Cuda_13.4**
+```Instruction
+nvcc --version
+```
 # Start with next step first (Only use this if model doesn't run)
 **If model is not loaded when running oss-20b**
 ```Instruction
