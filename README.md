@@ -1,8 +1,8 @@
 # Benchmark Testing
 
 # _____________________
-**Username: Benchmark**             
-**Password: Benchmark**
+**Username: benchmark**             
+**Password: benchmark**
 # _____________________
 
 **The SSD should already have everything downloaded and ready to run**
