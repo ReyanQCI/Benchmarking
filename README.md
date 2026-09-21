@@ -56,4 +56,6 @@ done
 ```Instruction
 watch -n 2 'nvidia-smi --query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv'
 ```
- 
+
+
+# To end the tasks press ctrl+C 
