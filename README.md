@@ -71,6 +71,46 @@ done
 ```Instruction
 watch -n 2 'nvidia-smi --query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv'
 ```
+```Instruction
+import asyncio
+import aiohttp
 
+URL = "http://localhost:8000/v1/chat/completions"
+MODEL = "openai/gpt-oss-20b"
 
+async def request(session):
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {
+                "role": "user",
+                "content": "Explain the theory of relativity in substantial detail."
+            }
+        ],
+        "max_tokens": 512,
+        "temperature": 0.7,
+    }
+
+    async with session.post(URL, json=payload) as r:
+        await r.read()
+
+async def worker(session):
+    while True:
+        try:
+            await request(session)
+        except Exception as e:
+            print(f"Request failed: {e}")
+            await asyncio.sleep(1)
+
+async def main():
+    async with aiohttp.ClientSession() as session:
+        workers = [
+            asyncio.create_task(worker(session))
+            for _ in range(32)
+        ]
+        await asyncio.gather(*workers)
+
+asyncio.run(main())
+
+```
 # To end the tasks press ctrl+C 
