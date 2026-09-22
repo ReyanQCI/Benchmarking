@@ -59,9 +59,9 @@ vllm serve openai/gpt-oss-20b --tensor-parallel-size 4
 ```instruction
 while true; do 
 
-    echo "===== $(date '+%Y-%m-%d %H:%M:%S') =====" >> sensors.log 
+    echo "===== $(date '+%Y-%m-%d %H:%M:%S') =====" >> sensors.csv 
 
-    sensors >> sensors.log 
+    sensors >> sensors.csv
 
     sleep 2 
 
