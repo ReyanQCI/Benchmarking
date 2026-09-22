@@ -79,7 +79,7 @@ while true; do
         echo "$timestamp,$cpu_temp,$gpu_index,$gpu_temp,$gpu_util,$gpu_power,$gpu_memory" >> sensors.csv
     done
 
-    sleep 1
+    sleep 2
 done
 
 ```
