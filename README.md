@@ -69,7 +69,7 @@ done
 # In a third terminal (Optional)
 **This will open a live window showing the data**
 ```Instruction
-watch -n 2 'nvidia-smi --query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv'
+watch -n 1 'echo "=== CPU ==="; sensors; echo; echo "=== GPUs ==="; nvidia-smi --query-gpu=index,temperature.gpu,utilization.gpu,power.draw,memory.used --format=csv'
 ```
 
 # Run this file to constantly send requests
