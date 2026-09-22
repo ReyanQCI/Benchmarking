@@ -74,58 +74,6 @@ done
 ```Instruction
 import asyncio
 import aiohttp
-
-URL = "http://localhost:8000/v1/chat/completions"
-MODEL = "openai/gpt-oss-20b"
-
-async def request(session):
-    payload = {
-        "model": MODEL,
-        "messages": [
-            {
-                "role": "user",
-                "content": "Explain the theory of relativity in substantial detail."
-            }
-        ],
-        "max_tokens": 512,
-        "temperature": 0.7,
-    }
-
-    async with session.post(URL, json=payload) as r:
-        await r.read()
-
-async def worker(session):
-    while True:
-        try:
-            await request(session)
-        except Exception as e:
-            print(f"Request failed: {e}")
-            await asyncio.sleep(1)
-
-async def main():
-    async with aiohttp.ClientSession() as session:
-        workers = [
-            asyncio.create_task(worker(session))
-            for _ in range(32)
-        ]
-        await asyncio.gather(*workers)
-
-asyncio.run(main())
-
-```
-**To run this**
-```instruction
-python3 request.py
-```
-# (Optional) In another Terminal
-**This will open a live window showing the data**
-```Instruction
-watch -n 1 'echo "=== CPU ==="; sensors; echo; echo "=== GPUs ==="; nvidia-smi --query-gpu=index,temperature.gpu,utilization.gpu,power.draw,memory.used --format=csv'
-```
-
-```Instruction
-import asyncio
-import aiohttp
 import sys
 from datetime import datetime
 
@@ -135,14 +83,17 @@ MODEL = "openai/gpt-oss-20b"
 
 NUM_WORKERS = 32
 
-REQUEST_TIMEOUT = aiohttp.ClientTimeout(
+REQUEST_TIMEOUT = aiohttp.ClientTimeout( # For if it takes too long to complete request ie(Error) it will stop runnin
     total=60,
     connect=10,
     sock_read=50,
 )
 
-
-async def request(session, worker_id):
+#==============
+# Sends a request to the model to complete
+# At 512 Tokens the GPUs are are 100% use
+#==============
+async def request(session, worker_id): 
     payload = {
         "model": MODEL,
         "messages": [
@@ -170,10 +121,12 @@ async def worker(session, worker_id):
 
 
 async def main():
-    print("Starting stress test...")
-    print(f"Workers: {NUM_WORKERS}")
+    print(f"Workers: {NUM_WORKERS}") # Workers are loaded requests (For this 32 requests are sent)
     print(f"Model:   {MODEL}")
     print(f"URL:     {URL}")
+    print(f"Running Benchmark...")
+    # Showing an output to see if it is running
+
 
     connector = aiohttp.TCPConnector(
         limit=NUM_WORKERS,
@@ -185,7 +138,7 @@ async def main():
         connector=connector,
     ) as session:
 
-        workers = [
+        workers = [ # All workers keep creating tasks
             asyncio.create_task(worker(session, i + 1))
             for i in range(NUM_WORKERS)
         ]
@@ -193,7 +146,7 @@ async def main():
         try:
             await asyncio.gather(*workers)
 
-        except Exception as error:
+        except Exception as error: # Make sure no errors our found or else it will stop sending requests
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             print()
@@ -207,7 +160,7 @@ async def main():
             for task in workers:
                 task.cancel()
 
-            await asyncio.gather(
+            await asyncio.gather( #Stops all 32 workers
                 *workers,
                 return_exceptions=True,
             )
@@ -215,12 +168,22 @@ async def main():
             sys.exit(1)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # Run until Ctrl+C is pressed to stop it
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\nTest manually stopped.")
         sys.exit(130)
+
+```
+**To run this**
+```instruction
+python3 request.py
+```
+# (Optional) In another Terminal
+**This will open a live window showing the data**
+```Instruction
+watch -n 1 'echo "=== CPU ==="; sensors; echo; echo "=== GPUs ==="; nvidia-smi --query-gpu=index,temperature.gpu,utilization.gpu,power.draw,memory.used --format=csv'
 ```
 
 # To end the tasks press ctrl+C 
