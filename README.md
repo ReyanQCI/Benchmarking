@@ -180,7 +180,7 @@ async def main():
 
         except Exception as error:
 
-            log_file = "Error.txt"
+            log_file = "Error.txt" #Creates a file that will hold the error codes
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             with open(log_file, "a", encoding = "utf-8") as file:
@@ -205,7 +205,7 @@ async def main():
                 *workers,
                 return_exceptions=True,
             )
-            os.system("shutdown -h +1")
+            os.system("shutdown -h +1") #Shutsdown the whole system when error is found after logging it
             sys.exit(1)
 
 #=========
