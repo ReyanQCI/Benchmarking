@@ -83,27 +83,20 @@ MODEL = "openai/gpt-oss-20b"
 
 NUM_WORKERS = 32
 
-#==========
-# For if it takes too long to complete request ie(Error) it will stop running
-#==========
-REQUEST_TIMEOUT = aiohttp.ClientTimeout
-( 
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(
     total=60,
     connect=10,
     sock_read=50,
 )
 
-#==============
-# Sends a request to the model to complete
-# At 512 Tokens the GPUs are are 100% use
-#==============
-async def request(session, worker_id): 
+
+async def request(session, worker_id):
     payload = {
         "model": MODEL,
         "messages": [
             {
                 "role": "user",
-                "content": "Explain the theory of relativity in substantial detail."
+                "content": "Explain the theory of relativity in substantial detail.",
             }
         ],
         "max_tokens": 512,
@@ -125,29 +118,21 @@ async def worker(session, worker_id):
 
 
 async def main():
-    print(f"Workers: {NUM_WORKERS}") # Workers are loaded requests (For this 32 requests are sent)
+    print(f"Workers: {NUM_WORKERS}")
     print(f"Model:   {MODEL}")
     print(f"URL:     {URL}")
-    print(f"Running Benchmark...")
-    #==========
-    # Showing an output to see if it is running
-    #==========
+    print("Running Benchmark...")
 
-    connector = aiohttp.TCPConnector
-    (
+    connector = aiohttp.TCPConnector(
         limit=NUM_WORKERS,
         limit_per_host=NUM_WORKERS,
     )
 
-    async with aiohttp.ClientSession
-    (
+    async with aiohttp.ClientSession(
         timeout=REQUEST_TIMEOUT,
         connector=connector,
     ) as session:
 
-        #=========
-        # All workers keep creating tasks
-        #=========
         workers = [
             asyncio.create_task(worker(session, i + 1))
             for i in range(NUM_WORKERS)
@@ -155,9 +140,7 @@ async def main():
 
         try:
             await asyncio.gather(*workers)
-        #============
-        # Make sure no errors our found or else it will stop sending requests
-        #============
+
         except Exception as error:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -168,26 +151,17 @@ async def main():
             print(f"Error: {type(error).__name__}: {error}")
             print("=" * 60)
 
-            #========
-            # Stop all remaining workers.
-            #========
             for task in workers:
                 task.cancel()
 
-            #========
-            #Stops all 32 workers
-            #========
-            await asyncio.gather
-            ( 
+            await asyncio.gather(
                 *workers,
                 return_exceptions=True,
             )
 
             sys.exit(1)
 
-#=========
-# Run until Ctrl+C is pressed to stop it
-#=========
+
 if __name__ == "__main__":
     try:
         asyncio.run(main())
