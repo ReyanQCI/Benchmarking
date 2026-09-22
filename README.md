@@ -226,5 +226,137 @@ python3 request.py
 ```Instruction
 watch -n 1 'echo "=== CPU ==="; sensors; echo; echo "=== GPUs ==="; nvidia-smi --query-gpu=index,temperature.gpu,utilization.gpu,power.draw,memory.used --format=csv'
 ```
+#CHECK
+```instruction
+import asyncio
+import aiohttp
+import os
+import sys
+from datetime import datetime
 
+
+URL = "http://localhost:8000/v1/chat/completions"
+MODEL = "openai/gpt-oss-20b"
+
+NUM_WORKERS = 32
+
+#==========
+# For if it takes too long to complete request ie(Error) it will stop running
+#==========
+
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(
+    total=60,
+    connect=10,
+    sock_read=50,
+)
+
+#==============
+# Sends a request to the model to complete
+# At 512 Tokens the GPUs are are 100% use
+#==============
+
+async def request(session, worker_id):
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {
+                "role": "user",
+                "content": "Explain the theory of relativity in substantial detail.",
+            }
+        ],
+        "max_tokens": 512,
+        "temperature": 0.7,
+    }
+
+    async with session.post(URL, json=payload) as response:
+        response.raise_for_status()
+
+        body = await response.read()
+
+        if not body:
+            raise RuntimeError("Server returned an empty response")
+
+
+async def worker(session, worker_id):
+    while True:
+        await request(session, worker_id)
+
+
+async def main():
+    print(f"Workers: {NUM_WORKERS}")  #Workers are loaded requests (For this 32 requests are sent)
+    print(f"Model:   {MODEL}")
+    print(f"URL:     {URL}")
+    print("Running Benchmark...")
+
+    #==========
+    # Showing an output to see if it is running
+    #==========
+
+    connector = aiohttp.TCPConnector(
+        limit=NUM_WORKERS,
+        limit_per_host=NUM_WORKERS,
+    )
+
+    async with aiohttp.ClientSession(
+        timeout=REQUEST_TIMEOUT,
+        connector=connector,
+    ) as session:
+
+        #=========
+        # All workers keep creating tasks
+        #=========
+
+        workers = [
+            asyncio.create_task(worker(session, i + 1))
+            for i in range(NUM_WORKERS)
+        ]
+
+        try:
+            await asyncio.gather(*workers)
+
+        #============
+        # Make sure no errors our found or else it will stop sending requests
+        #============
+
+        except Exception as error:
+
+            log_file = "Error.txt"
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            with open(log_file, "a", encoding = "utf-8") as file:
+                file.write("=" * 60 "\n")
+                file.write("TEST FAILED \n")
+                file.write(f"Time:  {timestamp} \n")
+                file.write(f"Error: {type(error).__name__}: {error} \n")
+                file.write("=" * 60 "\n\n")
+
+            #========
+            # Stop all remaining workers.
+            #========
+
+            for task in workers:
+                task.cancel()
+
+            #========
+            #Stops all 32 workers
+            #========
+
+            await asyncio.gather(
+                *workers,
+                return_exceptions=True,
+            )
+            os.system("shutdown -h +1")
+            sys.exit(1)
+
+#=========
+# Run until Ctrl+C is pressed to stop it
+#=========
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nTest manually stopped.")
+        sys.exit(130)
+```
 # To end the tasks press ctrl+C 
