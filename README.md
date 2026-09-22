@@ -126,7 +126,7 @@ async def worker(session, worker_id):
 
 
 async def main():
-    print(f"Workers: {NUM_WORKERS}")  Workers are loaded requests (For this 32 requests are sent)
+    print(f"Workers: {NUM_WORKERS}")  #Workers are loaded requests (For this 32 requests are sent)
     print(f"Model:   {MODEL}")
     print(f"URL:     {URL}")
     print("Running Benchmark...")
