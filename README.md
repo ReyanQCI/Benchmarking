@@ -59,11 +59,13 @@ vllm serve openai/gpt-oss-20b --tensor-parallel-size 4
 ```instruction
 while true; do 
 
-    nvidia-smi --query-gpu=timestamp,index,name,temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader >> gpu_metrics.csv 
+    echo "===== $(date '+%Y-%m-%d %H:%M:%S') =====" >> sensors.log 
+
+    sensors >> sensors.log 
 
     sleep 2 
 
-done
+done 
 ```
 
 # In a third terminal (Optional)
