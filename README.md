@@ -83,7 +83,11 @@ MODEL = "openai/gpt-oss-20b"
 
 NUM_WORKERS = 32
 
-REQUEST_TIMEOUT = aiohttp.ClientTimeout( # For if it takes too long to complete request ie(Error) it will stop runnin
+#==========
+# For if it takes too long to complete request ie(Error) it will stop running
+#==========
+REQUEST_TIMEOUT = aiohttp.ClientTimeout
+( 
     total=60,
     connect=10,
     sock_read=50,
@@ -125,28 +129,36 @@ async def main():
     print(f"Model:   {MODEL}")
     print(f"URL:     {URL}")
     print(f"Running Benchmark...")
+    #==========
     # Showing an output to see if it is running
+    #==========
 
-
-    connector = aiohttp.TCPConnector(
+    connector = aiohttp.TCPConnector
+    (
         limit=NUM_WORKERS,
         limit_per_host=NUM_WORKERS,
     )
 
-    async with aiohttp.ClientSession(
+    async with aiohttp.ClientSession
+    (
         timeout=REQUEST_TIMEOUT,
         connector=connector,
     ) as session:
 
-        workers = [ # All workers keep creating tasks
+        #=========
+        # All workers keep creating tasks
+        #=========
+        workers = [
             asyncio.create_task(worker(session, i + 1))
             for i in range(NUM_WORKERS)
         ]
 
         try:
             await asyncio.gather(*workers)
-
-        except Exception as error: # Make sure no errors our found or else it will stop sending requests
+        #============
+        # Make sure no errors our found or else it will stop sending requests
+        #============
+        except Exception as error:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             print()
@@ -156,19 +168,27 @@ async def main():
             print(f"Error: {type(error).__name__}: {error}")
             print("=" * 60)
 
+            #========
             # Stop all remaining workers.
+            #========
             for task in workers:
                 task.cancel()
 
-            await asyncio.gather( #Stops all 32 workers
+            #========
+            #Stops all 32 workers
+            #========
+            await asyncio.gather
+            ( 
                 *workers,
                 return_exceptions=True,
             )
 
             sys.exit(1)
 
-
-if __name__ == "__main__": # Run until Ctrl+C is pressed to stop it
+#=========
+# Run until Ctrl+C is pressed to stop it
+#=========
+if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
