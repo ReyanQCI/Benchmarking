@@ -68,13 +68,8 @@ while true; do
 done 
 ```
 
-# In a third terminal (Optional)
-**This will open a live window showing the data**
-```Instruction
-watch -n 1 'echo "=== CPU ==="; sensors; echo; echo "=== GPUs ==="; nvidia-smi --query-gpu=index,temperature.gpu,utilization.gpu,power.draw,memory.used --format=csv'
-```
 
-# Run this file to constantly send requests
+# In a third terminal Run this file to constantly send requests
 **Already set up as request.py**
 ```Instruction
 import asyncio
@@ -122,4 +117,10 @@ asyncio.run(main())
 ```instruction
 python3 request.py
 ```
+# (Optional) In another Terminal
+**This will open a live window showing the data**
+```Instruction
+watch -n 1 'echo "=== CPU ==="; sensors; echo; echo "=== GPUs ==="; nvidia-smi --query-gpu=index,temperature.gpu,utilization.gpu,power.draw,memory.used --format=csv'
+```
+
 # To end the tasks press ctrl+C 
