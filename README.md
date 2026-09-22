@@ -59,7 +59,7 @@ vllm serve openai/gpt-oss-20b --tensor-parallel-size 4
 ```instruction
 #!/bin/bash
 
-echo "timestamp,cpu_temp_c,gpu_index,gpu_temp_c,gpu_utilization_pct,gpu_power_w,gpu_memory_used_mib" > sensors.csv
+echo "timestamp,cpu_temp_c,gpu_index,gpu_temp_c,gpu_utilization_pct,gpu_power_w,gpu_memory_used_mib" > Datalog.csv
 
 while true; do
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
@@ -76,7 +76,7 @@ while true; do
         gpu_power=$(echo "$gpu_power" | xargs)
         gpu_memory=$(echo "$gpu_memory" | xargs)
 
-        echo "$timestamp,$cpu_temp,$gpu_index,$gpu_temp,$gpu_util,$gpu_power,$gpu_memory" >> sensors.csv
+        echo "$timestamp,$cpu_temp,$gpu_index,$gpu_temp,$gpu_util,$gpu_power,$gpu_memory" >> Datalog.csv
     done
 
     sleep 2
