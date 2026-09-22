@@ -57,15 +57,31 @@ vllm serve openai/gpt-oss-20b --tensor-parallel-size 4
 # In a different Terminal
 **This will Collect data and save it too a file**
 ```instruction
-while true; do 
+#!/bin/bash
 
-    echo "===== $(date '+%Y-%m-%d %H:%M:%S') =====" >> sensors.csv 
+echo "timestamp,cpu_temp_c,gpu_index,gpu_temp_c,gpu_utilization_pct,gpu_power_w,gpu_memory_used_mib" > sensors.csv
 
-    sensors >> sensors.csv
+while true; do
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
-    sleep 2 
+    # Get CPU temperature (adjust this if your sensors output has multiple temp sensors)
+    cpu_temp=$(sensors | awk '/^Tctl:/ {gsub(/[+°C]/,"",$2); print $2; exit}')
 
-done 
+    nvidia-smi --query-gpu=index,temperature.gpu,utilization.gpu,power.draw,memory.used \
+        --format=csv,noheader,nounits | \
+    while IFS=',' read -r gpu_index gpu_temp gpu_util gpu_power gpu_memory; do
+        gpu_index=$(echo "$gpu_index" | xargs)
+        gpu_temp=$(echo "$gpu_temp" | xargs)
+        gpu_util=$(echo "$gpu_util" | xargs)
+        gpu_power=$(echo "$gpu_power" | xargs)
+        gpu_memory=$(echo "$gpu_memory" | xargs)
+
+        echo "$timestamp,$cpu_temp,$gpu_index,$gpu_temp,$gpu_util,$gpu_power,$gpu_memory" >> sensors.csv
+    done
+
+    sleep 1
+done
+
 ```
 
 
