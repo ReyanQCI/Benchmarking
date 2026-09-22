@@ -83,12 +83,20 @@ MODEL = "openai/gpt-oss-20b"
 
 NUM_WORKERS = 32
 
+#==========
+# For if it takes too long to complete request ie(Error) it will stop running
+#==========
+
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(
     total=60,
     connect=10,
     sock_read=50,
 )
 
+#==============
+# Sends a request to the model to complete
+# At 512 Tokens the GPUs are are 100% use
+#==============
 
 async def request(session, worker_id):
     payload = {
@@ -118,10 +126,14 @@ async def worker(session, worker_id):
 
 
 async def main():
-    print(f"Workers: {NUM_WORKERS}")
+    print(f"Workers: {NUM_WORKERS}")  Workers are loaded requests (For this 32 requests are sent)
     print(f"Model:   {MODEL}")
     print(f"URL:     {URL}")
     print("Running Benchmark...")
+
+    #==========
+    # Showing an output to see if it is running
+    #==========
 
     connector = aiohttp.TCPConnector(
         limit=NUM_WORKERS,
@@ -133,6 +145,10 @@ async def main():
         connector=connector,
     ) as session:
 
+        #=========
+        # All workers keep creating tasks
+        #=========
+
         workers = [
             asyncio.create_task(worker(session, i + 1))
             for i in range(NUM_WORKERS)
@@ -140,6 +156,10 @@ async def main():
 
         try:
             await asyncio.gather(*workers)
+
+        #============
+        # Make sure no errors our found or else it will stop sending requests
+        #============
 
         except Exception as error:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -151,8 +171,16 @@ async def main():
             print(f"Error: {type(error).__name__}: {error}")
             print("=" * 60)
 
+            #========
+            # Stop all remaining workers.
+            #========
+
             for task in workers:
                 task.cancel()
+
+            #========
+            #Stops all 32 workers
+            #========
 
             await asyncio.gather(
                 *workers,
@@ -161,6 +189,9 @@ async def main():
 
             sys.exit(1)
 
+#=========
+# Run until Ctrl+C is pressed to stop it
+#=========
 
 if __name__ == "__main__":
     try:
