@@ -123,4 +123,104 @@ python3 request.py
 watch -n 1 'echo "=== CPU ==="; sensors; echo; echo "=== GPUs ==="; nvidia-smi --query-gpu=index,temperature.gpu,utilization.gpu,power.draw,memory.used --format=csv'
 ```
 
+```Instruction
+import asyncio
+import aiohttp
+import sys
+from datetime import datetime
+
+
+URL = "http://localhost:8000/v1/chat/completions"
+MODEL = "openai/gpt-oss-20b"
+
+NUM_WORKERS = 32
+
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(
+    total=60,
+    connect=10,
+    sock_read=50,
+)
+
+
+async def request(session, worker_id):
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {
+                "role": "user",
+                "content": "Explain the theory of relativity in substantial detail."
+            }
+        ],
+        "max_tokens": 512,
+        "temperature": 0.7,
+    }
+
+    async with session.post(URL, json=payload) as response:
+        response.raise_for_status()
+
+        body = await response.read()
+
+        if not body:
+            raise RuntimeError("Server returned an empty response")
+
+
+async def worker(session, worker_id):
+    while True:
+        await request(session, worker_id)
+
+
+async def main():
+    print("Starting stress test...")
+    print(f"Workers: {NUM_WORKERS}")
+    print(f"Model:   {MODEL}")
+    print(f"URL:     {URL}")
+
+    connector = aiohttp.TCPConnector(
+        limit=NUM_WORKERS,
+        limit_per_host=NUM_WORKERS,
+    )
+
+    async with aiohttp.ClientSession(
+        timeout=REQUEST_TIMEOUT,
+        connector=connector,
+    ) as session:
+
+        workers = [
+            asyncio.create_task(worker(session, i + 1))
+            for i in range(NUM_WORKERS)
+        ]
+
+        try:
+            await asyncio.gather(*workers)
+
+        except Exception as error:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            print()
+            print("=" * 60)
+            print("TEST FAILED")
+            print(f"Time:  {timestamp}")
+            print(f"Error: {type(error).__name__}: {error}")
+            print("=" * 60)
+
+            # Stop all remaining workers.
+            for task in workers:
+                task.cancel()
+
+            await asyncio.gather(
+                *workers,
+                return_exceptions=True,
+            )
+
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nTest manually stopped.")
+        sys.exit(130)
+```
+
 # To end the tasks press ctrl+C 
