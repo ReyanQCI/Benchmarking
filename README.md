@@ -71,6 +71,9 @@ done
 ```Instruction
 watch -n 2 'nvidia-smi --query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv'
 ```
+
+# Run this file to constantly send requests
+**Already set up as request.py**
 ```Instruction
 import asyncio
 import aiohttp
@@ -112,5 +115,9 @@ async def main():
 
 asyncio.run(main())
 
+```
+**To run this**
+```instruction
+python3 request.py
 ```
 # To end the tasks press ctrl+C 
